@@ -1,11 +1,10 @@
 
 class FilenameFactory:
-    def __init__(self, ext='png'):
-        self.ext = ext
+    def __init__(self):
         self.counter = 0
 
     def get_filename(self):
         filenumber = str(self.counter).zfill(4)  # supports up to 9999
-        filename = f'{filenumber}.{self.ext}'
+        filename = f'{filenumber}'
         self.counter += 1
         return filename

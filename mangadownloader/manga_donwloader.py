@@ -1,16 +1,20 @@
-from tabnanny import verbose
-import requests
-import bs4
 import time
 
-from .utils import ensure_dir_exists, get_full_path
+import bs4
+import requests
+
 from .filename_factory import FilenameFactory
+from .image import Image
 from .logger import Logger
+from .utils import ensure_dir_exists, get_full_path, get_name
 
 
 class MangaDownloader:
 
-    def __init__(self, src: str, name: str, interval=2, verbose=False):
+    def __init__(self, src: str, name: str = None, interval=2, verbose=False):
+        if name is None:
+            name = get_name(src)
+
         self.src = src
         self.name = name
         self.interval = interval
@@ -18,38 +22,37 @@ class MangaDownloader:
         self.logger = Logger(verbose)
 
     def download(self):
-        html = MangaDownloader.download_page_html(self.src, self.logger)
-        img_array = MangaDownloader.get_img_array(html, self.logger)
-        for img_src in img_array:
-            blob = MangaDownloader.download_image(img_src)
-            fn = self.ff.get_filename()
-            MangaDownloader.store_image(blob, self.name, fn, self.logger)
+        html = MangaDownloader.download_page_html(self.src)
+        self.logger.log(f"HTML parsed for '{self.src}'")
+        img_array = MangaDownloader.get_img_array(html)
+        self.logger.log(f"Total pages {len(img_array)}")
+        for number, img_src in enumerate(img_array):
+            img = self._get_image(number, img_src)
+            fp = MangaDownloader.store_image(self.name, img.filename, img.blob)
+            self.logger.log(f"Image '{img.filename}' stored at '{fp}'")
             time.sleep(self.interval)
 
+    def _get_image(self, number, src) -> Image:
+        response = requests.get(src)
+        image = Image(number, response)
+        return image
+
     @staticmethod
-    def download_page_html(src, logger):
+    def download_page_html(src):
         response = requests.get(src)
         raw_html = response.text
-        logger.log(f"HTML parsed for '{src}'")
         return bs4.BeautifulSoup(raw_html, features="lxml")
 
     @staticmethod
-    def get_img_array(parsed_html, logger):
+    def get_img_array(parsed_html):
         img_src_tag = parsed_html.find('p', {"id": "arraydata"})
         img_src_array = img_src_tag.text.split(',')
-        logger.log(f"Total pages: {len(img_src_array)}")
         return img_src_array
 
     @staticmethod
-    def download_image(src):
-        response = requests.get(src)
-        blob = response.content
-        return blob
-
-    @staticmethod
-    def store_image(blob, output_dir, filename, logger):
+    def store_image(output_dir, filename, blob):
         ensure_dir_exists(output_dir)
-        f_path = get_full_path(output_dir, filename)
-        logger.log(f"Image stored at {f_path}")
-        with open(f_path, 'wb+') as file:
+        full_path = get_full_path(output_dir, filename)
+        with open(full_path, 'wb+') as file:
             file.write(blob)
+        return full_path
