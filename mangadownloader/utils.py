@@ -18,12 +18,20 @@ def get_name(url: str):
     return parts[-1]
 
 
-def convert_to_pdf(input_dir):
+def convert_to_pdf(input_dir, auto_rotate=False):
     image_list = []
 
     for filename in os.listdir(input_dir):
         image_path = os.path.join(input_dir, filename)
         image = Image.open(image_path)
+
+        im_width = image.size[0]
+        im_height = image.size[1]
+        img_aspect = im_width / im_height
+
+        if auto_rotate and img_aspect > 1:
+            image = image.rotate(90, expand=True)
+
         image.convert('RGB')
         image_list.append(image)
 
