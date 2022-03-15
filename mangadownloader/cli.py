@@ -8,6 +8,8 @@ def parse_args():
     parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--pdf', dest='to_pdf', action='store_true')
     parser.add_argument('--auto-rotate', dest='auto_rotate', default=False, action='store_true')
+    parser.add_argument('--interval', default=False, type=float)
+    parser.add_argument('--auto-skip', dest='auto_skip', default=False, action='store_true')
     return parser.parse_args()
 
 def converter_parser():

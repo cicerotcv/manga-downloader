@@ -10,8 +10,10 @@ def main():
     verbose = args.verbose
     should_convert = args.to_pdf
     auto_rotate = args.auto_rotate
+    interval = args.interval
+    auto_skip = args.auto_skip
 
-    md = MangaDownloader(src=src, interval=1, verbose=verbose)
+    md = MangaDownloader(src=src, interval=interval, verbose=verbose, auto_skip=auto_skip)
     md.download()
 
     if should_convert:
